@@ -1,14 +1,18 @@
 import React from "react";
 import dateFns from "date-fns";
-import axios from 'axios';
-
+import axios from "axios";
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 class Calendar extends React.Component {
   state = {
     currentMonth: new Date(),
     selectedDate: new Date(),
-    events: {}
+    events: {},
+    open: false,
+    selectedEvent: {}
   }
-
   componentDidMount(){
     const { currentMonth } = this.state;
     const monthStart = dateFns.startOfMonth(currentMonth);
@@ -26,17 +30,44 @@ class Calendar extends React.Component {
         console.log(error.response);
       })
   }
-
+  handleClose = () => {
+    this.setState({ open: false })
+  }
+  handleOpen = event => {
+    this.setState({
+      open: true,
+      selectedEvent: event
+    })
+  }
   render() {
+    const { selectedEvent } = this.state;
     return (
-      <div className="calendar">
-        {this.renderHeader()}
-        {this.renderDays()}
-        {this.renderCells()}
+      <div>
+        <div className="calendar">
+          {this.renderHeader()}
+          {this.renderDays()}
+          {this.renderCells()}
+        </div>
+        <Dialog
+          open={this.state.open}
+          onClose={this.handleClose}
+        >
+          <DialogTitle>
+            { selectedEvent.title } - {dateFns.format(selectedEvent.start_at, "MMMM Do")}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              { selectedEvent.description }
+              <p>
+                <b>Start: </b>{ dateFns.format(selectedEvent.start_at, "h:mm a") }<br></br>
+                <b>End: </b>{ dateFns.format(selectedEvent.end_at, "h:mm a") }
+              </p>
+            </DialogContentText>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
-
   renderHeader() {
     const dateFormat = "MMMM YYYY";
     return (
@@ -57,7 +88,6 @@ class Calendar extends React.Component {
       </div>
     );
   }
-
   renderDays() {
     const dateFormat = "dddd";
     const days = [];
@@ -71,14 +101,12 @@ class Calendar extends React.Component {
     }
     return <div className="days row">{days}</div>;
   }
-
   renderCells() {
     const { currentMonth, selectedDate, events } = this.state;
     const monthStart = dateFns.startOfMonth(currentMonth);
     const monthEnd = dateFns.endOfMonth(monthStart);
     const startDate = dateFns.startOfWeek(monthStart);
     const endDate = dateFns.endOfWeek(monthEnd);
-
     const dateFormat = "D";
     const eventDateFormat = "YYYY-MM-DD";
     const rows = [];
@@ -103,7 +131,13 @@ class Calendar extends React.Component {
             {
               (events[eventFormattedDate] || []).map((event) => {
                 return(
-                  <div key={event.id} className="event">{event.title}</div>
+                  <div
+                    key={event.id}
+                    className="event"
+                    onClick={ () => { this.handleOpen(event) } }
+                  >
+                    {event.title}
+                  </div>
                 );
               })
             }
@@ -124,9 +158,8 @@ class Calendar extends React.Component {
       <div className="body">{rows}</div>
     );
   }
-
   nextMonth = () => {
-    let currentMonth = dateFns.addMonths(this.state.currentMonth, 1)
+    let currentMonth = dateFns.addMonths(this.state.currentMonth, 1);
     const monthStart = dateFns.startOfMonth(currentMonth);
     const monthEnd = dateFns.endOfMonth(monthStart);
     const startDate = dateFns.startOfWeek(monthStart);
@@ -142,7 +175,6 @@ class Calendar extends React.Component {
         console.log(error.response);
       })
   };
-
   prevMonth = () => {
     let currentMonth = dateFns.subMonths(this.state.currentMonth, 1);
     const monthStart = dateFns.startOfMonth(currentMonth);
@@ -161,5 +193,4 @@ class Calendar extends React.Component {
       })
   };
 }
-
 export default Calendar;
